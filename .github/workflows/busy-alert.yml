@@ -2,9 +2,9 @@ name: Busy alert
 
 on:
   schedule:
-    # כל 30 דקות, בין 05:00 ל-20:59 UTC (בערך 07:00-23:00 שעון ישראל).
+    # כל 30 דקות, בין 04:00 ל-21:59 UTC (מכסה 07:00-00:00 בשעון ישראל, קיץ וחורף).
     # השעות המדויקות נקבעות ב-config.json.
-    - cron: "*/30 5-20 * * *"
+    - cron: "*/30 4-21 * * *"
   workflow_dispatch:
     inputs:
       test:
@@ -50,6 +50,14 @@ jobs:
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           TEST_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.test }}
         run: python monitor.py
+
+      - name: Upload debug screenshots
+        if: always() && hashFiles('debug/**') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug
+          path: debug/
+          retention-days: 3
 
       - name: Save state
         run: |
