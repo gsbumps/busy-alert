@@ -1,0 +1,62 @@
+name: Busy alert
+
+on:
+  schedule:
+    # כל 30 דקות, בין 05:00 ל-20:59 UTC (בערך 07:00-23:00 שעון ישראל).
+    # השעות המדויקות נקבעות ב-config.json.
+    - cron: "*/30 5-20 * * *"
+  workflow_dispatch:
+    inputs:
+      test:
+        description: "שלח הודעת בדיקה עם המצב הנוכחי"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: busy-alert
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - name: Cache browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('requirements.txt') }}
+
+      - name: Install browser
+        run: python -m playwright install --with-deps chromium
+
+      - name: Check places
+        env:
+          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+          EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          TEST_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.test }}
+        run: python monitor.py
+
+      - name: Save state
+        run: |
+          if [ -f state.json ] && [ -n "$(git status --porcelain state.json)" ]; then
+            git config user.name "busy-alert-bot"
+            git config user.email "busy-alert-bot@users.noreply.github.com"
+            git add state.json
+            git commit -m "update state"
+            git push
+          fi
