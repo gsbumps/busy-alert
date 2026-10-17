@@ -54,6 +54,20 @@ def with_english(url: str) -> str:
     return url
 
 
+DEBUG_DIR = ROOT / "debug"
+
+
+def debug_dump(page, url: str) -> None:
+    """שומר צילום מסך כשלא נמצא גרף, לצורך אבחון."""
+    try:
+        DEBUG_DIR.mkdir(exist_ok=True)
+        name = re.sub(r"[^A-Za-z0-9]", "_", url)[-30:]
+        page.screenshot(path=str(DEBUG_DIR / f"{name}.png"), full_page=False)
+        (DEBUG_DIR / f"{name}.txt").write_text(page.url + "\n\n" + page.inner_text("body")[:5000], encoding="utf-8")
+    except Exception as e:  # noqa: BLE001
+        print("debug dump failed:", e)
+
+
 def read_live(page, url: str) -> dict:
     """מחזיר {'live': int|None, 'usual': int|None, 'status': str|None}"""
     page.goto(with_english(url), wait_until="domcontentloaded", timeout=60000)
@@ -67,22 +81,34 @@ def read_live(page, url: str) -> dict:
                 page.wait_for_load_state("domcontentloaded")
                 break
 
-    # קישורים מקוצרים (maps.app.goo.gl) מפנים לדף המלא - מוודאים שהוא באנגלית
+    # קישורים מקוצרים (maps.app.goo.gl) מפנים לדף המלא - מחכים להפניה ומוודאים שהוא באנגלית
+    try:
+        page.wait_for_url(re.compile(r"google\.[a-z.]+/maps/"), timeout=20000)
+    except Exception:  # noqa: BLE001
+        pass
     if "google." in page.url and "hl=en" not in page.url:
         page.goto(with_english(page.url.replace("hl=", "hl_old=")), wait_until="domcontentloaded", timeout=60000)
 
-    try:
-        page.wait_for_selector('[aria-label*="busy at"], [aria-label^="Currently"]', timeout=25000)
-    except Exception:
-        # גלילה בחלונית הצד כדי לטעון את גרף שעות העומס
-        for _ in range(6):
-            page.mouse.move(200, 500)
-            page.mouse.wheel(0, 1200)
-            page.wait_for_timeout(800)
-        try:
-            page.wait_for_selector('[aria-label*="busy at"], [aria-label^="Currently"]', timeout=10000)
-        except Exception:
-            return {"live": None, "usual": None, "status": None, "no_graph": True}
+    SEL = '[aria-label*="busy at"], [aria-label^="Currently"]'
+    found = False
+    for _ in range(12):
+        if page.locator(SEL).count():
+            found = True
+            break
+        # גלילה בחלונית הצד (שעות העומס נטענות רק אחרי גלילה)
+        page.evaluate(
+            """() => {
+              const s = [...document.querySelectorAll('div')].find(d =>
+                d.scrollHeight > d.clientHeight + 200 &&
+                /auto|scroll/.test(getComputedStyle(d).overflowY) &&
+                d.getBoundingClientRect().left < 500);
+              if (s) s.scrollTop += 900;
+            }"""
+        )
+        page.wait_for_timeout(1500)
+    if not found:
+        debug_dump(page, url)
+        return {"live": None, "usual": None, "status": None, "no_graph": True}
 
     page.wait_for_timeout(1500)
     labels = page.eval_on_selector_all(
