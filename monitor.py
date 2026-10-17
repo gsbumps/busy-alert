@@ -67,6 +67,10 @@ def read_live(page, url: str) -> dict:
                 page.wait_for_load_state("domcontentloaded")
                 break
 
+    # קישורים מקוצרים (maps.app.goo.gl) מפנים לדף המלא - מוודאים שהוא באנגלית
+    if "google." in page.url and "hl=en" not in page.url:
+        page.goto(with_english(page.url.replace("hl=", "hl_old=")), wait_until="domcontentloaded", timeout=60000)
+
     try:
         page.wait_for_selector('[aria-label*="busy at"], [aria-label^="Currently"]', timeout=25000)
     except Exception:

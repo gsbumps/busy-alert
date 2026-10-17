@@ -2,7 +2,7 @@
   "timezone": "Asia/Jerusalem",
   "check_hours": {
     "start": 8,
-    "end": 22
+    "end": 24
   },
   "check_days": [
     0,
@@ -15,8 +15,32 @@
   ],
   "places": [
     {
-      "name": "שם המקום",
-      "url": "https://maps.app.goo.gl/XXXXXXXX",
+      "name": "CROÛTE",
+      "url": "https://maps.app.goo.gl/4rbJw9mC4FUXjhHB8",
+      "min_level": "A little busy",
+      "notify_when_clear": false
+    },
+    {
+      "name": "PEREH",
+      "url": "https://maps.app.goo.gl/QbjcZP31eMxAoxbD6",
+      "min_level": "A little busy",
+      "notify_when_clear": false
+    },
+    {
+      "name": "BASTA",
+      "url": "https://maps.app.goo.gl/fwQiV3hEWJj9ijDw9",
+      "min_level": "A little busy",
+      "notify_when_clear": false
+    },
+    {
+      "name": "RAMBAM",
+      "url": "https://maps.app.goo.gl/8ivJGirHUzZrvBcB8",
+      "min_level": "A little busy",
+      "notify_when_clear": false
+    },
+    {
+      "name": "OFAIMME [Yaffo]",
+      "url": "https://maps.app.goo.gl/QDKauzqZnZAVRkho9",
       "min_level": "A little busy",
       "notify_when_clear": false
     }
