@@ -67,7 +67,10 @@ def debug_dump(page, url: str) -> None:
         (DEBUG_DIR / f"{name}.txt").write_text(page.url + "\n\n" + body[:5000], encoding="utf-8")
         print("  DEBUG url:", page.url[:150])
         print("  DEBUG title:", page.title())
-        print("  DEBUG body:", " | ".join(body.split("\n"))[:700])
+        flat = " | ".join(body.split("\n"))
+        pct = page.eval_on_selector_all("[aria-label]", "els => els.map(e => e.getAttribute('aria-label')).filter(t => /%/.test(t)).slice(0, 5)")
+        print("  DEBUG len:", len(flat), "| 'Popular times' in body:", "Popular times" in body, "| % labels:", pct)
+        print("  DEBUG body tail:", flat[-900:])
     except Exception as e:  # noqa: BLE001
         print("debug dump failed:", e)
 
@@ -94,22 +97,29 @@ def read_live(page, url: str) -> dict:
         page.goto(with_english(page.url.replace("hl=", "hl_old=")), wait_until="domcontentloaded", timeout=60000)
 
     SEL = '[aria-label*="busy at"], [aria-label^="Currently"]'
+    try:
+        page.wait_for_selector("h1", timeout=20000)
+    except Exception:  # noqa: BLE001
+        pass
+    page.wait_for_timeout(2000)
     found = False
-    for _ in range(12):
+    for _ in range(15):
         if page.locator(SEL).count():
             found = True
             break
         # גלילה בחלונית הצד (שעות העומס נטענות רק אחרי גלילה)
+        page.mouse.move(200, 650)
+        page.mouse.wheel(0, 700)
         page.evaluate(
             """() => {
               const s = [...document.querySelectorAll('div')].find(d =>
                 d.scrollHeight > d.clientHeight + 200 &&
                 /auto|scroll/.test(getComputedStyle(d).overflowY) &&
                 d.getBoundingClientRect().left < 500);
-              if (s) s.scrollTop += 900;
+              if (s) s.scrollTop += 700;
             }"""
         )
-        page.wait_for_timeout(1500)
+        page.wait_for_timeout(1200)
     if not found:
         debug_dump(page, url)
         return {"live": None, "usual": None, "status": None, "no_graph": True}
