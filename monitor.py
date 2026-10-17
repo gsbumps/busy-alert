@@ -63,7 +63,11 @@ def debug_dump(page, url: str) -> None:
         DEBUG_DIR.mkdir(exist_ok=True)
         name = re.sub(r"[^A-Za-z0-9]", "_", url)[-30:]
         page.screenshot(path=str(DEBUG_DIR / f"{name}.png"), full_page=False)
-        (DEBUG_DIR / f"{name}.txt").write_text(page.url + "\n\n" + page.inner_text("body")[:5000], encoding="utf-8")
+        body = page.inner_text("body")
+        (DEBUG_DIR / f"{name}.txt").write_text(page.url + "\n\n" + body[:5000], encoding="utf-8")
+        print("  DEBUG url:", page.url[:150])
+        print("  DEBUG title:", page.title())
+        print("  DEBUG body:", " | ".join(body.split("\n"))[:700])
     except Exception as e:  # noqa: BLE001
         print("debug dump failed:", e)
 
@@ -212,8 +216,12 @@ def main() -> int:
     report = []
 
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = p.chromium.launch(args=["--disable-blink-features=AutomationControlled"])
         ctx = browser.new_context(
+            user_agent=(
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+            ),
             locale="en-US",
             timezone_id=str(TZ),
             viewport={"width": 1400, "height": 1000},
