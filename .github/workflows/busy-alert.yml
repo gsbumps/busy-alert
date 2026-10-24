@@ -48,6 +48,7 @@ jobs:
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          GOOGLE_COOKIES: ${{ secrets.GOOGLE_COOKIES }}
           TEST_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.test }}
         run: python monitor.py
 
