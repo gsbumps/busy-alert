@@ -3,6 +3,8 @@
 רץ ב-GitHub Actions, קורא את מדד העומס החי (Live) של כל מקום ב-config.json,
 ושולח מייל כשהמקום נהיה עמוס (ושוב כשהוא נרגע, אם ביקשת).
 """
+from __future__ import annotations
+
 import json
 import os
 import re
@@ -21,6 +23,46 @@ TZ = ZoneInfo(CONFIG.get("timezone", "Asia/Jerusalem"))
 TEST_MODE = os.environ.get("TEST_MODE", "false").lower() == "true"
 
 LIVE_RE = re.compile(r"Currently (\d+)% busy, usually (\d+)% busy", re.I)
+
+
+def load_google_cookies() -> list[dict]:
+    """קורא את עוגיות ההתחברות לגוגל מהסוד GOOGLE_COOKIES (JSON מ-Cookie-Editor או cookies.txt)."""
+    raw = os.environ.get("GOOGLE_COOKIES", "").strip()
+    if not raw:
+        return []
+    cookies = []
+    if raw.startswith("["):
+        for c in json.loads(raw):
+            item = {
+                "name": c["name"], "value": c["value"],
+                "domain": c.get("domain", ".google.com"), "path": c.get("path", "/"),
+                "secure": bool(c.get("secure", False)), "httpOnly": bool(c.get("httpOnly", False)),
+            }
+            exp = c.get("expirationDate") or c.get("expires")
+            if exp and float(exp) > 0:
+                item["expires"] = float(exp)
+            ss = str(c.get("sameSite", "")).lower()
+            item["sameSite"] = {"strict": "Strict", "lax": "Lax", "no_restriction": "None", "none": "None"}.get(ss, "Lax")
+            if item["sameSite"] == "None":
+                item["secure"] = True
+            cookies.append(item)
+    else:  # Netscape cookies.txt
+        for line in raw.splitlines():
+            http_only = line.startswith("#HttpOnly_")
+            if http_only:
+                line = line[len("#HttpOnly_"):]
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split("\t")
+            if len(parts) < 7:
+                continue
+            domain, _, path, secure, exp, name, value = parts[:7]
+            item = {"name": name, "value": value, "domain": domain, "path": path,
+                    "secure": secure.upper() == "TRUE", "httpOnly": http_only, "sameSite": "Lax"}
+            if exp.isdigit() and int(exp) > 0:
+                item["expires"] = int(exp)
+            cookies.append(item)
+    return [c for c in cookies if "google" in c["domain"]]
 
 
 def in_check_hours(now: datetime) -> bool:
@@ -70,7 +112,7 @@ def debug_dump(page, url: str) -> None:
         flat = " | ".join(body.split("\n"))
         pct = page.eval_on_selector_all("[aria-label]", "els => els.map(e => e.getAttribute('aria-label')).filter(t => /%/.test(t)).slice(0, 5)")
         print("  DEBUG len:", len(flat), "| 'Popular times' in body:", "Popular times" in body, "| % labels:", pct)
-        print("  DEBUG body tail:", flat[-900:])
+        print("  DEBUG signed in:", "Sign in" not in flat[:600])
     except Exception as e:  # noqa: BLE001
         print("debug dump failed:", e)
 
@@ -237,6 +279,12 @@ def main() -> int:
             viewport={"width": 1400, "height": 1000},
             extra_http_headers={"Accept-Language": "en-US,en;q=0.9"},
         )
+        cookies = load_google_cookies()
+        if cookies:
+            ctx.add_cookies(cookies)
+            print(f"loaded {len(cookies)} Google cookies")
+        else:
+            print("WARNING: no GOOGLE_COOKIES - Google will not show busyness data")
         page = ctx.new_page()
         for place in CONFIG["places"]:
             name = place["name"]
