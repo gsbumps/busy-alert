@@ -6,12 +6,12 @@
     "level": "busier_usual"
   },
   "OFAIMME [Yaffo]": {
-    "level": "busier_usual"
+    "level": "less_usual"
   },
   "RAMBAM": {
     "level": "busier_usual"
   },
   "BASTA": {
-    "level": "a_little"
+    "level": "not_too_busy"
   }
 }
