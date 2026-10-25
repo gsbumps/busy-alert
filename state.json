@@ -1,6 +1,6 @@
 {
   "CROÛTE": {
-    "level": "not_busy"
+    "level": "not_too_busy"
   },
   "PEREH": {
     "level": "not_too_busy"
@@ -9,6 +9,9 @@
     "level": "busier_usual"
   },
   "RAMBAM": {
-    "level": "not_too_busy"
+    "level": "a_little"
+  },
+  "BASTA": {
+    "level": "not_busy"
   }
 }
