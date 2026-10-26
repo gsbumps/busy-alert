@@ -1,17 +1,17 @@
 {
   "CROÛTE": {
-    "level": "not_busy"
-  },
-  "PEREH": {
-    "level": "not_busy"
-  },
-  "OFAIMME [Yaffo]": {
-    "level": "busier_usual"
-  },
-  "RAMBAM": {
     "level": "not_too_busy"
   },
+  "PEREH": {
+    "level": "busier_usual"
+  },
+  "OFAIMME [Yaffo]": {
+    "level": "a_little"
+  },
+  "RAMBAM": {
+    "level": "busier_usual"
+  },
   "BASTA": {
-    "level": "not_busy"
+    "level": "busier_usual"
   }
 }
