@@ -3,15 +3,15 @@
     "level": "not_too_busy"
   },
   "PEREH": {
-    "level": "busier_usual"
+    "level": "not_too_busy"
   },
   "OFAIMME [Yaffo]": {
-    "level": "a_little"
+    "level": "less_usual"
   },
   "RAMBAM": {
-    "level": "busier_usual"
+    "level": "a_little"
   },
   "BASTA": {
-    "level": "busier_usual"
+    "level": "not_too_busy"
   }
 }
