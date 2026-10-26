@@ -1,12 +1,12 @@
 {
   "CROÛTE": {
-    "level": "not_busy"
+    "level": "busier_usual"
   },
   "PEREH": {
     "level": "busier_usual"
   },
   "OFAIMME [Yaffo]": {
-    "level": "not_busy"
+    "level": "busier_usual"
   },
   "RAMBAM": {
     "level": "busier_usual"
