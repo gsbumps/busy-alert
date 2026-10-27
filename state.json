@@ -3,7 +3,7 @@
     "level": "busier_usual"
   },
   "PEREH": {
-    "level": "less_usual"
+    "level": "busier_usual"
   },
   "OFAIMME [Yaffo]": {
     "level": "less_usual"
@@ -12,6 +12,6 @@
     "level": "busier_usual"
   },
   "BASTA": {
-    "level": "not_busy"
+    "level": "busier_usual"
   }
 }
