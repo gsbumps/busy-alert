@@ -283,9 +283,25 @@ def main() -> int:
         if cookies:
             ctx.add_cookies(cookies)
             print(f"loaded {len(cookies)} Google cookies")
+            names = sorted({c["name"] for c in cookies})
+            print("  cookie names:", ", ".join(names))
+            key = {"SID", "__Secure-1PSID", "__Secure-3PSID", "SAPISID"}
+            print("  login cookies present:", sorted(key & set(names)) or "NONE")
+            expired = [c["name"] for c in cookies if c.get("expires") and c["expires"] < datetime.now().timestamp()]
+            print("  expired cookies:", expired or "none")
         else:
             print("WARNING: no GOOGLE_COOKIES - Google will not show busyness data")
         page = ctx.new_page()
+        # בדיקת התחברות: אם לא מחוברים, myaccount מפנה לדף ההתחברות
+        try:
+            page.goto("https://myaccount.google.com/?hl=en", wait_until="domcontentloaded", timeout=45000)
+            page.wait_for_timeout(3000)
+            signed_in = "accounts.google.com" not in page.url and "signin" not in page.url
+            print("SIGN-IN CHECK:", "SIGNED IN" if signed_in else "NOT SIGNED IN", "|", page.url[:90])
+            acct = page.eval_on_selector_all('[aria-label*="Google Account"]', "els => els.map(e => e.getAttribute('aria-label')).slice(0, 1)")
+            print("  account button found:", bool(acct))  # בלי שם/מייל - הלוג ציבורי
+        except Exception as e:  # noqa: BLE001
+            print("SIGN-IN CHECK failed:", e)
         for place in CONFIG["places"]:
             name = place["name"]
             try:
